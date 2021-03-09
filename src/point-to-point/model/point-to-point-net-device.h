@@ -93,6 +93,13 @@ public:
    * \param bps the data rate at which this object operates
    */
   void SetDataRate (DataRate bps);
+  
+  /**
+   * Get the Data Rate used for transmission of packets.  The data rate is
+   * set in the Attach () method from the corresponding field in the channel
+   * to which the device is attached. 
+   */
+  DataRate GetDataRate ();
 
   /**
    * Set the interframe gap used to separate packets.  The interframe gap

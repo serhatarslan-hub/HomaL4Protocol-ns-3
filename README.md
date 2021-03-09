@@ -2,6 +2,23 @@
 Homa Transport Protocol on The Network Simulator, Version 3
 ================================
 
+Maintained by [Serhat Arslan](https://web.stanford.edu/~sarslan/)
+
+This  is  an  implementation of the Homa Transport Protocol described in \[1\].
+It implements a connectionless, reliable, low latency message delivery
+service. 
+
+\[1\] Behnam Montazeri, Yilong Li, Mohammad Alizadeh, and John Ousterhout. 2018. 
+Homa: a receiver-driven low-latency transport protocol using network 
+priorities. In <i>Proceedings of the 2018 Conference of the ACM Special Interest 
+Group on Data Communication</i> (<i>SIGCOMM '18</i>). Association for Computing 
+Machinery, New York, NY, USA, 221–235. 
+DOI:https://doi-org.stanford.idm.oclc.org/10.1145/3230543.3230564
+
+This implementation is created in guidance of the protocol creators and 
+maintained as the official ns-3 implementation of the protocol. The IPv6
+compatibility of the protocol is left for future work.
+
 ## Table of Contents:
 
 1) [An overview](#an-open-source-project)
@@ -39,15 +56,14 @@ by ns-3 is built as a set of libraries. User simulations
 are expected to be written as simple programs that make
 use of these ns-3 libraries.
 
-To build the set of default libraries and the example
-programs included in this package, you need to use the
+To build the set of default libraries, you need to use the
 tool 'waf'. Detailed information on how to use waf is
 included in the file doc/build.txt
 
 However, the real quick and dirty way to get started is to
 type the command
 ```shell
-./waf configure --enable-examples
+./waf configure
 ```
 
 followed by
@@ -66,25 +82,23 @@ file.
 Other platforms may or may not work: we welcome patches to
 improve the portability of the code to these other platforms.
 
-## Running ns-3
+## Running ns-3 with a simple HomaL4Protocol test
 
-On recent Linux systems, once you have built ns-3 (with examples
-enabled), it should be easy to run the sample programs with the
-following command, such as:
+On recent Linux systems, once you have built ns-3, it should be 
+easy to run the sample programs with the following command, such as:
 
 ```shell
-./waf --run simple-global-routing
+./waf --run scratch/HomaL4Protocol-simple-test
 ```
 
-That program should generate a `simple-global-routing.tr` text
-trace file and a set of `simple-global-routing-xx-xx.pcap` binary
-pcap trace files, which can be read by `tcpdump -tt -r filename.pcap`
-The program source can be found in the examples/routing directory.
+That program should generate a `HomaL4ProtocolSimpleTestMsgTraces.tr` text
+trace file which includes logs related to creation and delivery of messages.
+The program source can be found in the scratch/HomaL4Protocol-simple-test.cc.
 
 ## Getting access to the ns-3 documentation
 
 Once you have verified that your build of ns-3 works by running
-the simple-point-to-point example as outlined in 3) above, it is
+the `HomaL4Protocol-simple-test` as outlined in 3) above, it is
 quite likely that you will want to get started on reading
 some ns-3 documentation.
 
@@ -117,10 +131,40 @@ familiar with it.
 If you have successfully installed git, you can get
 a copy of the development version with the following command:
 ```shell
-git clone https://gitlab.com/nsnam/ns-3-dev.git
+git clone https://github.com/serhatarslan-hub/HomaL4Protocol-ns-3.git
 ```
 
-However, we recommend to follow the Gitlab guidelines for starters,
-that includes creating a Gitlab account, forking the ns-3-dev project
+However, we recommend to follow the GitHub guidelines for starters,
+that includes creating a GitHub account, forking the ns-3-dev project
 under the new account's name, and then cloning the forked repository.
 You can find more information in the [manual](https://www.nsnam.org/docs/manual/html/working-with-git.html).
+
+## List of related files for HomaL4Protocol based on NS3
+
+### Created files
+
+`scratch/homa-official-simple-test.cc` : A simple test simulation to verify the Homa Protocol works.
+
+`scratch/homa-paper-reproduction.cc` : The large scale simulation to reproduce the scenario described in the paper.
+
+`src/applications/model/msg-generator-app.cc/h` : The application environment to create given workloads.
+
+`src/internet/model/homa-header.cc/h`: The packet header declaration for HomaL4Protocol.
+
+`src/internet/model/homa-l4-protocol.cc/h`: The main protocol file to define the Homa behavior.
+
+`src/internet/model/homa-socket-factory.cc/h`: Class that creates Homa sockets.
+
+`src/internet/model/homa-socket.cc/h` : Homa socket declaration (very similar to UDP sockets)
+
+`src/traffic-control/model/pfifo-homa-queue-disc.cc/h` : Priority queueing on switches based on packet priorities defined by HomaL4Protocol.
+
+### Modified Files
+
+`src/internet/helper/internet-stack-helper.cc` : HomaL4Protocol is added as a part of default InternetStack.
+
+`src/internet/model/ipv4-global-routing.cc` : ECMP options added in addition to random, ie per-flow.
+
+`src/internet/model/ipv4-l3-protocol.cc/h` : IP fragmentation made configurable. 
+
+`src/point-to-point/model/point-to-point-net-device.cc/h` : Added an API to get the line rate of the device.

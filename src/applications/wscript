@@ -5,6 +5,7 @@ def build(bld):
     module.source = [
         'model/bulk-send-application.cc',
         'model/onoff-application.cc',
+        'model/msg-generator-app.cc',
         'model/packet-sink.cc',
         'model/udp-client.cc',
         'model/udp-server.cc',
@@ -46,6 +47,7 @@ def build(bld):
     headers.source = [
         'model/bulk-send-application.h',
         'model/onoff-application.h',
+        'model/msg-generator-app.h',
         'model/packet-sink.h',
         'model/udp-client.h',
         'model/udp-server.h',

@@ -227,17 +227,25 @@ public:
    * \return the number of stream indices assigned by this model
    */
   int64_t AssignStreams (int64_t stream);
+  
+  enum EcmpMode_e {
+    ECMP_NONE,
+    ECMP_RANDOM,
+    ECMP_PER_FLOW,
+  };
 
 protected:
   void DoDispose (void);
 
 private:
-  /// Set to true if packets are randomly routed among ECMP; set to false for using only one route consistently
-  bool m_randomEcmpRouting;
+  enum EcmpMode_e m_ecmpMode; //<! Determine the type of ECMP if any
   /// Set to true if this interface should respond to interface events by globallly recomputing routes 
   bool m_respondToInterfaceEvents;
   /// A uniform random number generator for randomly routing packets among ECMP 
   Ptr<UniformRandomVariable> m_rand;
+  uint32_t m_seed;
+  
+  Hasher m_hasher;
 
   /// container of Ipv4RoutingTableEntry (routes to hosts)
   typedef std::list<Ipv4RoutingTableEntry *> HostRoutes;
@@ -262,11 +270,22 @@ private:
 
   /**
    * \brief Lookup in the forwarding table for destination.
-   * \param dest destination address
+   * \param header The Ipv4 header associated with the packet
+   * \param p The associated packet
    * \param oif output interface if any (put 0 otherwise)
    * \return Ipv4Route to route the packet to reach dest address
    */
-  Ptr<Ipv4Route> LookupGlobal (Ipv4Address dest, Ptr<NetDevice> oif = 0);
+  Ptr<Ipv4Route> LookupGlobal (const Ipv4Header &header, 
+                               Ptr<const Packet> p, 
+                               Ptr<NetDevice> oif = 0);
+  
+  /**
+   * \brief Calculate the flow hash for per-flow ECMP
+   * \param header The Ipv4 header associated with the packet
+   * \param ipPayload The associated packet
+   * \return 64 bit hash of the flow information
+   */
+  uint64_t GetFlowHash(const Ipv4Header &header, Ptr<const Packet> ipPayload);
 
   HostRoutes m_hostRoutes;             //!< Routes to hosts
   NetworkRoutes m_networkRoutes;       //!< Routes to networks
