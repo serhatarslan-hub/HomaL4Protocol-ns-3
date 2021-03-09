@@ -16,7 +16,7 @@ Machinery, New York, NY, USA, 221–235.
 DOI:https://doi-org.stanford.idm.oclc.org/10.1145/3230543.3230564
 
 This implementation is created in guidance of the protocol creators and 
-maintained as the official ns-3 implementation of the protocol. The IPv6
+maintained as the ns-3 implementation of the protocol. The IPv6
 compatibility of the protocol is left for future work.
 
 ## Table of Contents:
