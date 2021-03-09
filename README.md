@@ -1,5 +1,5 @@
 
-The Network Simulator, Version 3
+Homa Transport Protocol on The Network Simulator, Version 3
 ================================
 
 ## Table of Contents:
