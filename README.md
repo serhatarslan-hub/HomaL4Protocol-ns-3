@@ -5,8 +5,7 @@ Homa Transport Protocol on The Network Simulator, Version 3
 Maintained by [Serhat Arslan](https://web.stanford.edu/~sarslan/)
 
 This  is  an  implementation of the Homa Transport Protocol described in \[1\].
-It implements a connectionless, reliable, low latency message delivery
-service. 
+It implements a connectionless, reliable, low latency message delivery service. 
 
 \[1\] Behnam Montazeri, Yilong Li, Mohammad Alizadeh, and John Ousterhout. 2018. 
 Homa: a receiver-driven low-latency transport protocol using network 
@@ -15,9 +14,20 @@ Group on Data Communication</i> (<i>SIGCOMM '18</i>). Association for Computing
 Machinery, New York, NY, USA, 221–235. 
 DOI:https://doi-org.stanford.idm.oclc.org/10.1145/3230543.3230564
 
-This implementation is created in guidance of the protocol creators and 
-maintained as the ns-3 implementation of the protocol. The IPv6
-compatibility of the protocol is left for future work.
+This implementation is created after a series of meetings with the protocol creators and maintained as an ns-3 implementation of the protocol. 
+It has not yet undergone extensive validation by the Homa creators. 
+If you encounter any bugs or a performance issues, please reach out to us. 
+The IPv6 compatibility of the protocol is left for future work.
+
+If you decide to use this artifact on your work, please cite it as the following:
+
+@misc{arslan, 
+  author = {Arslan, Serhat},
+  title  = {An NS-3 Implementation of Homa Transport Protocol}, 
+  url    = {https://github.com/serhatarslan-hub/HomaL4Protocol-ns-3}, 
+  year   = {2021}, 
+  month  = {Mar}
+} 
 
 ## Table of Contents:
 
@@ -98,7 +108,7 @@ The program source can be found in the scratch/HomaL4Protocol-simple-test.cc.
 ## Getting access to the ns-3 documentation
 
 Once you have verified that your build of ns-3 works by running
-the `HomaL4Protocol-simple-test` as outlined in 3) above, it is
+the `HomaL4Protocol-simple-test` as outlined in (3) above, it is
 quite likely that you will want to get started on reading
 some ns-3 documentation.
 
