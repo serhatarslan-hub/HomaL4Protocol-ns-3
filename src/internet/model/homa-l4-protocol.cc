@@ -19,6 +19,7 @@
  */
 
 #include <algorithm>
+#include <numeric>
 
 #include "ns3/log.h"
 #include "ns3/assert.h"
@@ -653,9 +654,11 @@ HomaOutboundMsg::HomaOutboundMsg (Ptr<Packet> message,
   
   m_maxGrantedIdx = std::min((uint16_t)(m_homa->GetBdp () -1), numPkts);
           
-  m_rtxEvent = Simulator::Schedule (m_homa->GetOutboundRtxTimeout (), 
-                                    &HomaOutboundMsg::ExpireRtxTimeout, 
-                                    this, m_maxGrantedIdx);
+  // FIX: There is no timeout mechanism on the sender side for Homa 
+  //      (even for garbage collection purposes), so removing the following
+  // m_rtxEvent = Simulator::Schedule (m_homa->GetOutboundRtxTimeout (), 
+  //                                   &HomaOutboundMsg::ExpireRtxTimeout, 
+  //                                   this, m_maxGrantedIdx);
 }
 
 HomaOutboundMsg::~HomaOutboundMsg ()
@@ -834,6 +837,25 @@ void HomaOutboundMsg::HandleResend (HomaHeader const &homaHeader)
   NS_ASSERT(homaHeader.GetFlags() & HomaHeader::Flags_t::RESEND);
   
   m_pktTxQ.push(homaHeader.GetPktOffset ());
+
+  uint16_t grantOffset = homaHeader.GetGrantOffset();
+  NS_ASSERT_MSG(grantOffset < this->GetMsgSizePkts (), 
+                "HomaOutboundMsg shouldn't be granted after it is already fully granted!");
+  
+  if (grantOffset > m_maxGrantedIdx)
+  {
+    NS_LOG_LOGIC("HomaOutboundMsg (" << this 
+                 << ") is increasing the Grant index to "
+                 << grantOffset << ".");
+      
+    m_maxGrantedIdx = grantOffset;
+      
+    uint8_t prio = homaHeader.GetPrio();
+    NS_LOG_LOGIC("HomaOutboundMsg (" << this << ") is setting priority to "
+                 << (uint16_t) prio << ".");
+    m_prio = prio;
+    m_prioSetByReceiver = true;
+  }
 }
     
 void HomaOutboundMsg::HandleAck (HomaHeader const &homaHeader)
@@ -1251,6 +1273,7 @@ HomaInboundMsg::HomaInboundMsg (Ptr<Packet> p,
                                 Ptr<Ipv4Interface> iface, uint32_t mtuBytes, 
                                 uint16_t rttPackets, bool memIsOptimized)
     : m_prio(0),
+      m_currentlyScheduled(false),
       m_numRtxWithoutProgress (0)
 {
   NS_LOG_FUNCTION (this);
@@ -1384,6 +1407,16 @@ bool HomaInboundMsg::IsFullyReceived ()
   return std::none_of(m_receivedPackets.begin(), 
                       m_receivedPackets.end(), 
                       std::logical_not<bool>());
+}
+
+bool HomaInboundMsg::IsCurrentlyScheduled (void) 
+{
+  return m_currentlyScheduled;
+}
+
+void HomaInboundMsg::SetCurrentlyScheduled (bool currentlyScheduled) 
+{
+  m_currentlyScheduled = currentlyScheduled;
 }
     
 uint16_t HomaInboundMsg::GetNumRtxWithoutProgress ()
@@ -1762,31 +1795,35 @@ void HomaRecvScheduler::SendAppropriateGrants()
   Ptr<HomaInboundMsg> currentMsg;
   for (std::size_t i = 0; i < m_inboundMsgs.size(); ++i) 
   {
-    if (overcommitDue <= 0)
-      break;
-    
-    grantingPrio = std::min(grantingPrio, (uint8_t)(m_homa->GetNumTotalPrioBands()-1));
-    
     currentMsg = m_inboundMsgs[i];
-    Ipv4Address senderAddress = currentMsg->GetSrcAddress ();
-    if (!currentMsg->IsFullyGranted () &&
-        grantedSenders.find(senderAddress.Get ()) == grantedSenders.end())
-    {
-      if (m_busySenders.find(senderAddress.Get ()) == m_busySenders.end())
+    currentMsg->SetCurrentlyScheduled(false);
+
+    if (overcommitDue > 0)
+    {  
+      grantingPrio = std::min(grantingPrio, (uint8_t)(m_homa->GetNumTotalPrioBands()-1));
+      
+      
+      Ipv4Address senderAddress = currentMsg->GetSrcAddress ();
+      if (!currentMsg->IsFullyGranted () &&
+          grantedSenders.find(senderAddress.Get ()) == grantedSenders.end())
       {
-        if (currentMsg->IsGrantable ())
+        if (m_busySenders.find(senderAddress.Get ()) == m_busySenders.end())
         {
-          m_homa->SendDown(currentMsg->GenerateGrantOrAck(grantingPrio, 
-                                                          HomaHeader::Flags_t::GRANT),
-                           currentMsg->GetDstAddress (),
-                           senderAddress); 
+          if (currentMsg->IsGrantable ())
+          {
+            m_homa->SendDown(currentMsg->GenerateGrantOrAck(grantingPrio, 
+                                                            HomaHeader::Flags_t::GRANT),
+                            currentMsg->GetDstAddress (),
+                            senderAddress); 
+            currentMsg->SetCurrentlyScheduled(true);
+          }
+          
+          grantedSenders.insert(senderAddress.Get ());
+          
         }
-        
-        grantedSenders.insert(senderAddress.Get ());
-        
+        overcommitDue--;
+        grantingPrio++;
       }
-      overcommitDue--;
-      grantingPrio++;
     }
   }
 }
@@ -1817,12 +1854,13 @@ void HomaRecvScheduler::ExpireRtxTimeout(Ptr<HomaInboundMsg> inboundMsg,
       return;
     }
       
-    if (m_busySenders.find(inboundMsg->GetSrcAddress ().Get ()) == m_busySenders.end())
+    if (m_busySenders.find(inboundMsg->GetSrcAddress ().Get ()) == m_busySenders.end() &&
+        inboundMsg->IsCurrentlyScheduled())
     {
-      // We send RESEND packets only to non-busy senders
+      // We send RESEND packets only to non-busy senders with scheduled messages
       NS_LOG_LOGIC(Simulator::Now().GetNanoSeconds () << 
                    " Rtx Timer for an inbound Msg (" << inboundMsg << 
-                   ") expired, which is active. RESEND packets will be sent");
+                   ") expired, which is scheduled. RESEND packets will be sent");
         
       std::list<Ptr<Packet>> rsndPkts = inboundMsg->GenerateResends (maxRsndPktOffset);
       while (!rsndPkts.empty())
@@ -1845,7 +1883,7 @@ void HomaRecvScheduler::ExpireRtxTimeout(Ptr<HomaInboundMsg> inboundMsg,
     {
       inboundMsg->ResetNumRtxWithoutProgress ();
     }
-    else
+    else if (inboundMsg->IsCurrentlyScheduled())
     {
       inboundMsg->IncrNumRtxWithoutProgress ();
     }

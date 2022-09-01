@@ -688,6 +688,16 @@ public:
    * \return Whether this message has been fully received
    */
   bool IsFullyReceived (void);
+
+  /**
+   * \brief Get whether m_currentlyScheduled value is true.
+   */
+  bool IsCurrentlyScheduled (void);
+  /**
+   * \brief Get whether m_currentlyScheduled value is true.
+   * \param currentlyScheduled The current value to denote being scheduled or not
+   */
+  void SetCurrentlyScheduled (bool currentlyScheduled);
   
   /**
    * \brief Get the number of rtx timeouts without receiving any new packet
@@ -751,6 +761,7 @@ private:
   uint16_t m_maxGrantableIdx;//!< Highest Grant Offset determined so far (default: m_rttPackets)
   uint16_t m_maxGrantedIdx;  //!< Highest Grant Offset sent so far
   uint8_t m_prio;            //!< The most recent granted priority set for this message
+  bool m_currentlyScheduled; //!< Whether this message is prioritized enough to be actively granted
   
   EventId m_rtxEvent;        //!< The EventID for the retransmission timeout
   uint16_t m_lastRtxGrntIdx; //!< The m_maxGrantableIdx value as of last time rtx timer expired
