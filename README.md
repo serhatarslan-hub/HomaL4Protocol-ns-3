@@ -15,9 +15,9 @@ Machinery, New York, NY, USA, 221–235.
 DOI:https://doi-org.stanford.idm.oclc.org/10.1145/3230543.3230564
 
 This implementation is created after a series of meetings with the protocol creators and maintained as an ns-3 implementation of the protocol. 
-It has not yet undergone extensive validation by the Homa creators. 
-If you encounter any bugs or a performance issues, please reach out to us. 
-The IPv6 compatibility of the protocol is left for future work.
+It has not yet undergone extensive validation by the Homa creators and there are couple of missing features which are listed in the "Issues" tab of this repository. 
+Hence, bugs or performance issues may exist. 
+If you encounter any, please reach out to us. 
 
 If you decide to use this artifact on your work, please cite it as the following:
 
@@ -29,13 +29,16 @@ If you decide to use this artifact on your work, please cite it as the following
   month  = {Mar}
 } 
 
+The most complete version of the protocol can be found at [this repository](https://github.com/PlatformLab/HomaModule) which implements Homa as a Linux Kernel Module.
+
 ## Table of Contents:
 
 1) [An overview](#an-open-source-project)
 2) [Building ns-3](#building-ns-3)
-3) [Running ns-3](#running-ns-3)
+3) [Running ns-3 with a simple HomaL4Protocol test](#running-ns-3-with-a-simple-homal4protocol-test)
 4) [Getting access to the ns-3 documentation](#getting-access-to-the-ns-3-documentation)
 5) [Working with the development version of ns-3](#working-with-the-development-version-of-ns-3)
+6) [List of related files for HomaL4Protocol based on NS3](#list-of-related-files-for-homal4protocol-based-on-ns3)
 
 Note:  Much more substantial information about ns-3 can be found at
 https://www.nsnam.org
